@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<script type="text/javascript" src="js/jcanvas.min.js"></script>
+	<title>Drawing Bin Trees</title>
+	<style type="text/css">
+		table{
+			text-align: center;
+		}
+		#consola{
+			width: 500px;
+			height: 100px;
+		}
+		#canvas_0{
+			
+		}
+		#div_canvas{
+			border-style: solid;
+			border-color: black;
+			border-width: 10px;
+			width: 640px;
+			height: 480px;
+			overflow: scroll;
+		}
+	</style>
+</head>
+<body>
+<center>
+<table>
+	<tr>
+		<td>
+			<div class="menu_botones" hidden>
+				<button class="boton">
+					Insertar
+				</button>
+				<button class="boton">
+					Eliminar
+				</button>
+			</div>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<!-- Escondido -->
+			<div id="div_canvas" hidden>
+			<canvas id="canvas_0">
+				
+			</canvas>
+			</div>
+		</td>
+		<td>
+				<textarea id="consola"></textarea>
+			<br>
+				<input onsubmit="consola_send()" id="consola_input"><button onclick="consola_send()">Send</button>
+			<br>			
+		</td>
+	</tr>
+</table>
+</center>
+<button onclick="resize_im(50)">+Zoom</button><button onclick="resize_im(-50)">-Zoom</button>
+<br>
+<center>
+<img width="300" src="">
+</body>
+<script type="text/javascript">
+	var width = 640;
+	var height = 960;
+
+	function dibujar_texto(texto){
+		/*$('#canvas_0').drawText({
+		  fillStyle: '#9cf',
+		  strokeStyle: '#25a',
+		  strokeWidth: 2,
+		  x: width/2, y: height/2,
+		  fontSize: 48,
+		  fontFamily: 'Verdana, sans-serif',
+		  text: texto
+		});*/
+		$('#consola').val(texto+"\n"+$('#consola').val());
+	}
+
+	function dibujar_flecha(x1,y1,x2,y2){
+		$('canvas').drawLine({
+		  strokeStyle: '#000',
+		  strokeWidth: 3,
+		  rounded: true,
+		  endArrow: true,
+		  arrowRadius: 15,
+		  arrowAngle: 90,
+		  x1: x1, y1: y1,
+		  x2: x2, y2: y2
+		});
+	}
+
+	function Arbol(){
+		dibujar_texto("Arbol creado");
+		this.raiz=0;
+		this.hijo_der = -1;
+		this.hijo_izq = -1;
+	}
+
+	Arbol.prototype.imprimir = function(){
+		dibujar_texto(this.raiz);
+		//Escribir el dato del nodo
+		if (this.hijo_izq != -1){
+			this.hijo_izq.imprimir();
+		}
+		if (this.hijo_der != -1){
+			this.hijo_der.imprimir();
+		}
+	}
+
+	Arbol.prototype.nivel = function(){
+		var nivel_padre = 1;
+		//Escribir el dato del nodo
+		var nivel_izq = -1;
+		var nivel_der = -1;
+		if (this.hijo_izq != -1){
+			nivel_izq = this.hijo_izq.nivel();
+		}
+		if (this.hijo_der != -1){
+			nivel_der = this.hijo_der.nivel();
+		}
+		return Math.max(nivel_padre,nivel_der+1,nivel_izq+1);
+	}
+
+	Arbol.prototype.insertar = function(numero){
+		if (this.raiz == 0){
+			dibujar_texto("Insertar en raiz");
+			this.raiz = numero;
+		}else if(numero < this.raiz){
+			dibujar_texto("Insertar en hijo izquierdo");
+			if (this.hijo_izq == -1){
+				dibujar_texto("Creado hijo izquierdo");
+				this.hijo_izq = new Arbol();
+			}
+			this.hijo_izq.insertar(numero);
+		}else if(numero > this.raiz){
+			dibujar_texto("Insertar en hijo derecho");
+			if (this.hijo_der == -1){
+				dibujar_texto("Creado hijo derecho");
+				this.hijo_der = new Arbol();
+			}
+			this.hijo_der.insertar(numero);
+		}
+	}
+
+	Arbol.prototype.dibujar = function(ancho,pos_x,pos_y){
+		var radio = 20;
+		$('#canvas_0').drawEllipse({
+			fillStyle: '#9AE4BE',
+			x: pos_x, y: pos_y,
+			width: 2*radio, height: 2*radio
+		});
+		$('#canvas_0').drawText({
+		  fillStyle: '#9cf',
+		  strokeStyle: '#25a',
+		  x: pos_x, y: pos_y,
+		  fontSize: 15,
+		  fontFamily: 'Verdana, sans-serif',
+		  text: this.raiz
+		});
+		if (this.hijo_izq != -1){
+			this.hijo_izq.dibujar(ancho/2,pos_x-ancho/4,pos_y+100);
+			dibujar_flecha(pos_x,pos_y+radio,pos_x-ancho/4,pos_y+100-radio);
+		}else{
+			$('#canvas_0').drawEllipse({
+			fillStyle: '#FFE0F0',
+			x: pos_x-ancho/4, y: pos_y+100,
+			width: 2*radio, height: 2*radio
+			});
+		}
+		if (this.hijo_der != -1){
+			this.hijo_der.dibujar(ancho/2,pos_x+ancho/4,pos_y+100);
+			dibujar_flecha(pos_x,pos_y+radio,pos_x+ancho/4,pos_y+100-radio);
+		}else{
+			$('#canvas_0').drawEllipse({
+			fillStyle: '#FFE0F0',
+			x: pos_x+ancho/4, y: pos_y+100,
+			width: 2*radio, height: 2*radio
+			});
+		}
+		var imagen = $('#canvas_0').getCanvasImage('png');
+		$('img').attr('src',imagen);
+	}
+
+	var arbol_0 = new Arbol();
+
+	/*miLienzo = document.getElementById("canvas_0");
+	canvasLimites=miLienzo.getBoundingClientRect();*/
+
+	/*function obtenerCoordenadas(event){
+	    var posX;
+	    var posY;
+
+	    if (event.pageX || event.pageY) {
+	      posX = event.pageX- canvasLimites.left;
+	      posY = event.pageY- canvasLimites.top;
+	    }
+	    else {
+	      posX = event.clientX - canvasLimites.left;
+	      posY = event.clientY - canvasLimites.top;
+	    }
+	    posX = posX + 160.5;
+	    posY = posY - 46;
+		console.log(posX,posY);
+	 }*/
+
+	function init(){
+		dibujar_texto("Iniciando");
+		/*arbol_0.insertar(5);
+		arbol_0.insertar(12);
+		arbol_0.insertar(2);		
+		arbol_0.insertar(7);
+		arbol_0.insertar(4);
+		arbol_0.insertar(3);
+		arbol_0.insertar(8);
+		arbol_0.insertar(1);
+		arbol_0.insertar(6);
+		arbol_0.insertar(10);
+		arbol_0.insertar(11);
+		arbol_0.imprimir();*/
+		var nivel = arbol_0.nivel();
+		width = 80 * Math.pow(2,parseInt(nivel));
+		$("#canvas_0").attr("width",width);
+		$("#canvas_0").attr("height",height);
+		arbol_0.dibujar(width,width/2,40);
+		dibujar_texto("Nivel del árbol: " + arbol_0.nivel());
+		dibujar_texto("Insert node: insert numero");
+		//miLienzo.addEventListener('mousemove',obtenerCoordenadas,false);
+
+	}
+
+	$(document).ready(function(){
+		init();
+	});
+
+	function consola_send(){
+		var linea = $("#consola_input").val();
+		var array = linea.split(" ");
+
+		if (array[0]=="insert"){
+			arbol_0.insertar(parseInt(array[1]));
+			var nivel = arbol_0.nivel();
+			width = 320 * parseInt(nivel);
+			$("#canvas_0").attr("width",width);
+			$("#canvas_0").attr("height",height);
+			arbol_0.dibujar(width,width/2,40);
+		}else if (array[0]=="nivel"){
+			dibujar_texto("Nivel del arbol: "+ arbol_0.nivel());
+		}else if (array[0]=="size_im"){
+			$('img').attr('width',array[1]);
+		}
+	}
+
+	var size_imagen = 300;
+	function resize_im(num){
+		size_imagen += num;
+		if (size_imagen==0){
+			size_imagen = 50;
+		}
+		$('img').attr('width',size_imagen);
+	}
+
+</script>
+</html>
